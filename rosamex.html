@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Rosa Mexicano POS</title>
+
+<style>
+
+body{
+font-family:monospace;
+margin:0;
+background:#f4f4f4;
+}
+
+header{
+background:#8b0000;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+.container{
+padding:20px;
+}
+
+button{
+padding:12px;
+margin:5px;
+border:none;
+background:#8b0000;
+color:white;
+border-radius:6px;
+cursor:pointer;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+gap:10px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 2px 5px rgba(0,0,0,.2);
+margin-bottom:20px;
+}
+
+input{
+padding:10px;
+margin:5px;
+width:100%;
+}
+
+.mesaLibre{
+background:#4caf50;
+}
+
+.mesaOcupada{
+background:#d32f2f;
+}
+
+.ticket{
+font-family:monospace;
+width:280px;
+}
+
+.ticket hr{
+border-top:1px dashed black;
+}
+
+@media print{
+
+body *{
+visibility:hidden;
+}
+
+#ticketArea,#ticketArea *{
+visibility:visible;
+}
+
+#ticketArea{
+position:absolute;
+left:0;
+top:0;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>Rosa Mexicano POS</h1>
+<p>Cocina Mexicana</p>
+
+</header>
+
+<div class="container" id="login">
+
+<h2>Ingreso al sistema</h2>
+
+<input id="usuario" placeholder="Usuario">
+
+<input id="pass" placeholder="Contraseña" type="password">
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<div class="container" id="sistema" style="display:none">
+
+<h2>Mesas</h2>
+
+<div id="mesas" class="grid"></div>
+
+<div class="card">
+
+<h3>Agregar Mesa</h3>
+
+<button onclick="agregarMesa()">+ Nueva Mesa</button>
+
+</div>
+
+<div class="card">
+
+<h3>Agregar Platillo</h3>
+
+<input id="nombrePlatillo" placeholder="Nombre">
+
+<input id="precioPlatillo" placeholder="Precio" type="number">
+
+<button onclick="agregarPlatillo()">Guardar</button>
+
+</div>
+
+<div class="card">
+
+<h3>Menú</h3>
+
+<div id="menu"></div>
+
+</div>
+
+<div class="card">
+
+<h3>Reporte de ventas</h3>
+
+<div id="reportes"></div>
+
+</div>
+
+</div>
+
+<div id="comandaModal" style="display:none" class="container">
+
+<h2 id="mesaTitulo"></h2>
+
+<div id="botonesMenu"></div>
+
+<h3>Pedido</h3>
+
+<div id="pedido"></div>
+
+<h3>Total: $<span id="total">0</span></h3>
+
+<button onclick="imprimirTicket()">Imprimir Ticket</button>
+
+<button onclick="cerrarMesa()">Cerrar Mesa</button>
+
+<button onclick="volver()">Volver</button>
+
+</div>
+
+<div id="ticketArea" style="display:none"></div>
+
+<script>
+
+let usuarios=[
+{user:"admin",pass:"1234"},
+{user:"mesero1",pass:"1234"}
+]
+
+let mesas=JSON.parse(localStorage.getItem("mesas"))||7
+
+let menu=JSON.parse(localStorage.getItem("menu"))||[]
+
+let pedidos=JSON.parse(localStorage.getItem("pedidos"))||{}
+
+let mesaActual=null
+
+function login(){
+
+let u=document.getElementById("usuario").value
+let p=document.getElementById("pass").value
+
+let ok=usuarios.find(x=>x.user==u && x.pass==p)
+
+if(ok){
+
+document.getElementById("login").style.display="none"
+document.getElementById("sistema").style.display="block"
+
+cargarMesas()
+mostrarMenu()
+
+}
+
+else{
+
+alert("Usuario incorrecto")
+
+}
+
+}
+
+function cargarMesas(){
+
+let div=document.getElementById("mesas")
+
+div.innerHTML=""
+
+for(let i=1;i<=mesas;i++){
+
+let b=document.createElement("button")
+
+b.innerText="Mesa "+i
+
+b.onclick=()=>abrirMesa(i)
+
+if(pedidos[i]){
+
+b.className="mesaOcupada"
+
+}else{
+
+b.className="mesaLibre"
+
+}
+
+div.appendChild(b)
+
+}
+
+}
+
+function agregarMesa(){
+
+mesas++
+
+localStorage.setItem("mesas",mesas)
+
+cargarMesas()
+
+}
+
+function agregarPlatillo(){
+
+let n=document.getElementById("nombrePlatillo").value
+let p=parseFloat(document.getElementById("precioPlatillo").value)
+
+menu.push({nombre:n,precio:p})
+
+localStorage.setItem("menu",JSON.stringify(menu))
+
+mostrarMenu()
+
+}
+
+function mostrarMenu(){
+
+let div=document.getElementById("menu")
+
+div.innerHTML=""
+
+menu.forEach(p=>{
+
+let b=document.createElement("button")
+
+b.innerText=p.nombre+" $"+p.precio
+
+div.appendChild(b)
+
+})
+
+}
+
+function abrirMesa(n){
+
+mesaActual=n
+
+document.getElementById("sistema").style.display="none"
+
+document.getElementById("comandaModal").style.display="block"
+
+document.getElementById("mesaTitulo").innerText="Mesa "+n
+
+if(!pedidos[n]) pedidos[n]=[]
+
+renderPedido()
+
+let div=document.getElementById("botonesMenu")
+
+div.innerHTML=""
+
+menu.forEach(p=>{
+
+let b=document.createElement("button")
+
+b.innerText=p.nombre
+
+b.onclick=()=>{
+
+pedidos[n].push(p)
+
+localStorage.setItem("pedidos",JSON.stringify(pedidos))
+
+renderPedido()
+
+}
+
+div.appendChild(b)
+
+})
+
+}
+
+function renderPedido(){
+
+let div=document.getElementById("pedido")
+
+div.innerHTML=""
+
+let total=0
+
+pedidos[mesaActual].forEach((p,i)=>{
+
+let d=document.createElement("div")
+
+d.innerHTML=p.nombre+" $"+p.precio+" <button onclick='eliminar("+i+")'>X</button>"
+
+div.appendChild(d)
+
+total+=p.precio
+
+})
+
+document.getElementById("total").innerText=total
+
+}
+
+function eliminar(i){
+
+pedidos[mesaActual].splice(i,1)
+
+localStorage.setItem("pedidos",JSON.stringify(pedidos))
+
+renderPedido()
+
+}
+
+function cerrarMesa(){
+
+delete pedidos[mesaActual]
+
+localStorage.setItem("pedidos",JSON.stringify(pedidos))
+
+volver()
+
+}
+
+function volver(){
+
+document.getElementById("comandaModal").style.display="none"
+
+document.getElementById("sistema").style.display="block"
+
+cargarMesas()
+
+}
+
+function imprimirTicket(){
+
+let lista=pedidos[mesaActual]
+
+let total=0
+
+let html=""
+
+lista.forEach(p=>{
+
+html+=p.nombre+" "+p.precio+"<br>"
+
+total+=p.precio
+
+})
+
+let fecha=new Date().toLocaleString()
+
+let ticket=`
+
+<div class="ticket">
+
+<center>
+
+<b>RESTAURANTE ROSA MEXICANO</b><br>
+
+Cocina Mexicana<br><br>
+
+Tuxtla Gutierrez 1222<br>
+
+Col. Guajardo<br>
+
+Tel: 6865554664<br>
+
+RFC: AAHR771117LJ7<br>
+
+</center>
+
+<hr>
+
+Fecha: ${fecha}<br>
+
+Mesa: ${mesaActual}<br>
+
+<hr>
+
+${html}
+
+<hr>
+
+TOTAL: $${total}
+
+<hr>
+
+<center>Gracias por su visita</center>
+
+</div>
+
+`
+
+let div=document.getElementById("ticketArea")
+
+div.innerHTML=ticket
+
+div.style.display="block"
+
+window.print()
+
+div.style.display="none"
+
+}
+
+</script>
+
+</body>
+</html>
