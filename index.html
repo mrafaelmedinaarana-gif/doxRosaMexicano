@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Rosa Mexicano POS</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="fondo"></div>
+
+<header>
+
+<img src="logo.png" class="logo">
+
+<h1>Rosa Mexicano POS</h1>
+
+</header>
+
+<!-- LOGIN -->
+
+<section id="login" class="panel">
+
+<h2>Ingreso</h2>
+
+<input id="user" placeholder="Usuario">
+<input id="pass" type="password" placeholder="Contraseña">
+
+<button onclick="login()">Entrar</button>
+
+</section>
+
+
+<!-- PANEL -->
+
+<section id="panel" class="panel oculto">
+
+<h2>Panel</h2>
+
+<button onclick="abrirMesas()">Mesas</button>
+<button onclick="abrirAdmin()">Platillos</button>
+<button onclick="abrirReportes()">Reportes</button>
+<button onclick="logout()">Salir</button>
+
+</section>
+
+
+<!-- MESAS -->
+
+<section id="mesasPanel" class="panel oculto">
+
+<h2>Mesas</h2>
+
+<div id="mesas"></div>
+
+<button onclick="volverPanel()">Volver</button>
+
+</section>
+
+
+<!-- COMANDA -->
+
+<section id="comanda" class="panel oculto">
+
+<h2 id="mesaTitulo"></h2>
+
+<div class="contenedor">
+
+<div class="menu">
+
+<h3>Menú</h3>
+
+<div id="menu"></div>
+
+</div>
+
+<div class="pedido">
+
+<h3>Pedido</h3>
+
+<div id="pedido"></div>
+
+<h2>Total $<span id="total">0</span></h2>
+
+<button onclick="imprimir()">Imprimir Ticket</button>
+<button onclick="cerrarMesa()">Cerrar Mesa</button>
+<button onclick="volverMesas()">Volver</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ADMIN PLATILLOS -->
+
+<section id="admin" class="panel oculto">
+
+<h2>Platillos</h2>
+
+<input id="nombrePlatillo" placeholder="Nombre">
+<input id="precioPlatillo" placeholder="Precio">
+
+<button onclick="agregarPlatillo()">Agregar</button>
+
+<div id="listaPlatillos"></div>
+
+<button onclick="volverPanel()">Volver</button>
+
+</section>
+
+
+<!-- REPORTES -->
+
+<section id="reportes" class="panel oculto">
+
+<h2>Ventas del día</h2>
+
+<div id="reporteVentas"></div>
+
+<button onclick="volverPanel()">Volver</button>
+
+</section>
+
+
+<div id="ticket"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
